@@ -49,37 +49,88 @@ function renderMovies(movieList){
   const countElement=document.querySelector("#watchlistCount");
   if(countElement) countElement.textContent=watchlist.length;
 }
+function applyFilters() {
+    let result = [...movies];
 
-function applyFilters(){
-  /*
-   * LIVE DEMO: implement case-insensitive title search using searchInput.value.
-   * CHALLENGE 2: combine genre and minimum-rating filters here.
-   * Keep this as the single function that decides which movies are displayed.
-   */
-  let result=[...movies];
-  if(showingWatchlist) result=result.filter(movie=>watchlist.includes(movie.id));
-  renderMovies(result);
+    // Search filter
+    const searchText = searchInput.value.trim().toLowerCase();
+
+    if (searchText !== "") {
+        result = result.filter(movie =>
+            movie.title.toLowerCase().includes(searchText)
+        );
+    }
+
+    // Genre filter
+    const selectedGenre = genreFilter.value;
+
+    if (selectedGenre !== "ALL") {
+        result = result.filter(movie =>
+            movie.genre === selectedGenre
+        );
+    }
+
+    // Rating filter
+    const minRating = Number(ratingFilter.value);
+
+    result = result.filter(movie =>
+        movie.rating >= minRating
+    );
+
+    // Watchlist filter
+    if (showingWatchlist) {
+        result = result.filter(movie =>
+            watchlist.includes(movie.id)
+        );
+    }
+
+    // Update current visible movies
+    visibleMovies = [...result];
+
+    // Display filtered movies
+    renderMovies(result);
 }
+  function toggleWatchlist(movieId) {
+    if (watchlist.includes(movieId)) {
+        // Remove movie if it already exists
+        watchlist = watchlist.filter(id => id !== movieId);
+    } else {
+        // Add movie if it doesn't exist
+        watchlist.push(movieId);
+    }
 
-function toggleWatchlist(movieId){
-  /*
-   * CHALLENGE 1:
-   * - Remove the ID if it is already saved; otherwise add it.
-   * - Save the array in localStorage.
-   * - Re-apply filters and update the watchlist count.
-   */
-  console.info("Implement watchlist add/remove for movie",movieId);
+    // Save updated watchlist in local storage
+    localStorage.setItem("watchlist", JSON.stringify(watchlist));
+
+    // Re-apply filters to update displayed movies
+    applyFilters();
 }
+function showSurpriseMovie() {
+    if (visibleMovies.length === 0) {
+        surpriseMessage.hidden = false;
+        surpriseMessage.textContent = "No movies available! Try changing your filters.";
+        return;
+    }
 
-function showSurpriseMovie(){
-  /*
-   * CHALLENGE 3:
-   * Choose a random movie from the current filtered results.
-   * Handle an empty result list without crashing.
-   * Display the selected title in surpriseMessage.
-   */
-  surpriseMessage.hidden=false;
-  surpriseMessage.textContent="Implement Surprise Me: choose from the current results.";
+    // Select a random movie from current results
+    const randomIndex = Math.floor(Math.random() * visibleMovies.length);
+    const selectedMovie = visibleMovies[randomIndex];
+
+    // Display only the selected movie
+    surpriseMessage.hidden = false;
+
+    surpriseMessage.innerHTML = `
+        <h3>🎬 Your Surprise Movie!</h3>
+        <div class="surprise-card">
+            <h2>${selectedMovie.title}</h2>
+            <p>Release Date: ${selectedMovie.releaseDate}</p>
+            <p>⭐ Rating: ${selectedMovie.rating}</p>
+            <p>Genre: ${selectedMovie.genre}</p>
+        </div>
+    `;
+
+    // Hide other movie cards and display only the selected movie
+    renderMovies([selectedMovie]);
 }
 
 function showWatchlist(){
